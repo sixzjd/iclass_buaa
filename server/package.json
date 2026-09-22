@@ -1,7 +1,10 @@
 {
   "scripts": {
     "dev": "ts-node ./src/main.ts",
-    "build": "npx esbuild src/main.ts --bundle --platform=node --outfile=dist/main.js --external:fsevents"
+    "build": "npx esbuild src/main.ts --bundle --platform=node --outfile=dist/main.js --external:fsevents",
+    "build:cli": "npx esbuild src/cli/autosign.ts --bundle --platform=node --outfile=dist/autosign.js --external:fsevents",
+    "build:all": "npm run build && npm run build:cli",
+    "autosign": "node dist/autosign.js"
   },
   "dependencies": {
     "cheerio": "^1.2.0",

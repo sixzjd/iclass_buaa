@@ -232,6 +232,23 @@ button:disabled {
   margin-top: 14px;
 }
 
+/* 课前自动签到失败告警：要比普通 error-text 更抓眼，因为用户可能切到别的窗口了 */
+.auto-sign-alert {
+  border: 2px solid #b31d1d;
+  font-size: 15px;
+}
+
+.auto-sign-alert strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+}
+
+.auto-sign-alert p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;

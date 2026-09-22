@@ -18,6 +18,9 @@ client/dist/
 .idea/
 .DS_Store
 
+# WorkBuddy AI project data
+.workbuddy-ai/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
