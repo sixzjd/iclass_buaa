@@ -65,14 +65,14 @@ const sleep = (ms: number): Promise<void> =>
 
 /**
  * 课前自动签到（用户明确要求，别改）：
- *   课前 3 分钟开火 → 最多尝试 3 次、每次间隔 60 秒（即 T-3 / T-2 / T-1）→
+ *   课前 2 分钟开火 → 最多尝试 3 次、每次间隔 30 秒（即 T-2 / T-1:30 / T-1）→
  *   三次没成就停手，并弹出失败告警。
  * 这样告警在课前 1 分钟送达，用户还来得及手动补签；不再无限重试。
  * 另外：课前 5 分钟不要开始打（用户明确否决过）。
  */
-const AUTO_SIGN_LEAD_MS = 3 * 60 * 1000;
+const AUTO_SIGN_LEAD_MS = 2 * 60 * 1000;
 const AUTO_SIGN_MAX_ATTEMPTS = 3;
-const AUTO_SIGN_RETRY_INTERVAL_MS = 60_000;
+const AUTO_SIGN_RETRY_INTERVAL_MS = 30_000;
 /** 错过太久（超过开火时间 20 分钟）就不再自动追 */
 const AUTO_SIGN_GIVE_UP_MS = 20 * 60 * 1000;
 const AUTO_SIGN_STORAGE_KEY = "iclass_auto_sign";
@@ -396,7 +396,7 @@ const CalendarPage = () => {
         return () => window.clearInterval(timer);
     }, [autoSignPlan]);
 
-    // 到点开火：课前 3 分钟开始，最多 3 次、每次间隔 60 秒（T-3 / T-2 / T-1），
+    // 到点开火：课前 2 分钟开始，最多 3 次、每次间隔 30 秒（T-2 / T-1:30 / T-1），
     // 三次没成就停手，并弹出失败告警 —— 告警在课前 1 分钟送达，还来得及手动补签。
     useEffect(() => {
         if (!autoSignPlan || isSigningRef.current) {
@@ -601,7 +601,7 @@ const CalendarPage = () => {
         }
     };
 
-    /** 开/关「课前 3 分钟自动签到」 */
+    /** 开/关「课前自动签到」 */
     const handleToggleAutoSign = () => {
         if (autoSignPlan) {
             writeAutoSignPlan(null);
@@ -633,8 +633,8 @@ const CalendarPage = () => {
         setAutoSignAlert("");
         setSignMessage(
             Date.now() >= fireAt
-                ? `已设置「${course.name}」课前自动签到：已进入课前 3 分钟窗口，立即开始尝试`
-                : `已设置「${course.name}」课前自动签到：${formatClock(fireAt)}（课前 3 分钟）开始，` +
+                ? `已设置「${course.name}」课前自动签到：已进入课前 ${Math.round(AUTO_SIGN_LEAD_MS / 60_000)} 分钟窗口，立即开始尝试`
+                : `已设置「${course.name}」课前自动签到：${formatClock(fireAt)}（课前 ${Math.round(AUTO_SIGN_LEAD_MS / 60_000)} 分钟）开始，` +
                       `最多 ${AUTO_SIGN_MAX_ATTEMPTS} 次、每次间隔 ${Math.round(AUTO_SIGN_RETRY_INTERVAL_MS / 1000)} 秒，失败会弹告警`
         );
     };
@@ -759,7 +759,7 @@ const CalendarPage = () => {
                     >
                         {autoSignPlan
                             ? `取消课前自动签到（${autoSignCountdown}）`
-                            : "课前 3 分钟自动签到"}
+                            : `课前 ${Math.round(AUTO_SIGN_LEAD_MS / 60_000)} 分钟自动签到`}
                     </button>
                     {!isVpnMode && (
                         <button className="secondary" disabled={!selectedCourse} onClick={() => void handleGenerateQr()}>

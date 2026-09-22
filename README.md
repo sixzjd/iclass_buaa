@@ -11,7 +11,7 @@
 - **修复「签到永远报 `ERRCODE 100 参数错误!`」这个长期问题。** 根因：iClass 签到接口只接受落在 **[服务端时间 −3s, +1s]** 内的毫秒时间戳，而本机时钟可能比 iClass 快数秒，程序自造的 `Date.now()` 恒定落在窗口外。v1.0.4 用服务器 `Date` 响应头校正（方向对），但该头只有秒级精度，补不上几秒偏差。
   → 现在**签到前先向 iClass 索取服务端时间戳**（`GET /app/common/get_timestamp.action`）再提交。同一门课实测：本机时间戳 → `ERRCODE 100`；服务端时间戳 → `STATUS:0` 且复检 `signStatus=1`。
 - **签到失败不再谎报成功**：只有复检到 `get_stu_course_sched` 的 `signStatus === '1'` 才显示「签到成功」，否则明确报出 `ERRCODE`/`ERRMSG`。
-- **桌面端课前 3 分钟自动签到**：到点自动开始，最多尝试 3 次、每次间隔 60 秒（T-3 / T-2 / T-1），三次没成就停手并弹失败告警 + 桌面通知 —— 告警在课前 1 分钟送达，还来得及手动补签。
+- **桌面端课前 2 分钟自动签到**：到点自动开始，最多尝试 3 次、每次间隔 30 秒（T-2 / T-1:30 / T-1），三次没成就停手并弹失败告警 + 桌面通知 —— 告警在课前 1 分钟送达，还来得及手动补签。
 - 新增**无界面命令行**与**树莓派 / Linux 部署**（systemd）+ **失败通知推送**（Server酱 / pushplus / Bark / ntfy / webhook），见下方章节。
 
 ### 2026-06-01 — v1.0.4
@@ -45,7 +45,7 @@ npm run build:win      # 产物输出到 dist_exe/
 
 > **本节是备选方案，且同一账号只应部署一套。** 桌面端、本节的 Node 无界面版、以及 [`python` 分支](https://github.com/zeroduhyy/iclass_buaa/tree/python) 的 Flask Web 版三者**功能重叠**。若你已经有能用的部署（例如自行维护的 Python/Tkinter 版），直接沿用即可，不必再装本节这套。**两套同时运行会各自独立登录、重复签到并互相抢会话**，务必只保留一套。
 
-**行为**：每天自动拉当天课表 → 对所有未签的课在课前 3 分钟开火 → 最多尝试 3 次、每次间隔 60 秒（T-3 / T-2 / T-1）→ 三次没成就停手并推一条失败通知。通知在课前 1 分钟送达，还来得及手动补签 —— 这是刻意的取舍：**不做无限重试，宁可早点告警**。成功与否以复检到的 `signStatus` 为准，不会谎报。
+**行为**：每天自动拉当天课表 → 对所有未签的课在课前 2 分钟开火 → 最多尝试 3 次、每次间隔 30 秒（T-2 / T-1:30 / T-1）→ 三次没成就停手并推一条失败通知。通知在课前 1 分钟送达，还来得及手动补签 —— 这是刻意的取舍：**不做无限重试，宁可早点告警**。成功与否以复检到的 `signStatus` 为准，不会谎报。
 
 **依赖**：只要 **Node.js ≥ 18**。`server/dist/autosign.js` 是 esbuild 打包的**自包含单文件**（约 3 MB，依赖全内联），目标机**不需要 `npm install`、不需要编译**。
 
@@ -70,7 +70,7 @@ sudo systemctl start iclass-autosign
   "studentId": "", "password": "", "useVpn": true,
   "vpnUsername": "", "vpnPassword": "",
 
-  "leadMinutes": 3, "maxAttempts": 3, "retryIntervalSeconds": 60,
+  "leadMinutes": 2, "maxAttempts": 3, "retryIntervalSeconds": 30,
   "giveUpMinutesAfterStart": 0, "timetableRefreshMinutes": 10, "sessionMaxAgeMinutes": 30,
 
   "includeCourses": [], "excludeCourses": [], "logFile": "",
@@ -87,9 +87,9 @@ sudo systemctl start iclass-autosign
 |---|---|
 | `useVpn` | 走 WebVPN。**账号未绑手机号时必须为 `true`** —— iClass 直连登录只认 `phone` 字段。本实现严格按此值走，**不做**「先直连、失败再切 VPN」的自动探测，所以直连不通时不要指望它自己回退 |
 | `vpnUsername` / `vpnPassword` | 留空则复用 `studentId` / `password` |
-| `leadMinutes` | 课前几分钟开火（默认 3） |
+| `leadMinutes` | 课前几分钟开火（默认 2） |
 | `maxAttempts` | 最多尝试几次。**默认 3，三次没成就停手** |
-| `retryIntervalSeconds` | 尝试间隔（默认 60 秒）。配合 `leadMinutes: 3` 正好落在 T-3 / T-2 / T-1 |
+| `retryIntervalSeconds` | 尝试间隔（默认 30 秒）。配合 `leadMinutes: 2` 落在 T-2 / T-1:30 / T-1 |
 | `giveUpMinutesAfterStart` | 上课后多少分钟放弃。**`0`（默认）= 一直跟到下课** |
 | `timetableRefreshMinutes` / `sessionMaxAgeMinutes` | 课表刷新间隔 / 会话强制重登间隔 |
 | `includeCourses` / `excludeCourses` | 按 `courseSchedId` 白/黑名单，留空 = 全部 |

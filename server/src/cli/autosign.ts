@@ -6,7 +6,7 @@
  * 树莓派上跑不了。这个 CLI 复用同一套 core/services，把"每天自动签所有课"做成守护进程。
  *
  * ── 行为（用户明确要求，别改）──
- *   课前 3 分钟开火 → 最多尝试 3 次，每次间隔 60 秒（即 T-3 / T-2 / T-1）→ 仍失败就停手，
+ *   课前 2 分钟开火 → 最多尝试 3 次，每次间隔 30 秒（即 T-2 / T-1:30 / T-1）→ 仍失败就停手，
  *   并发一条**失败通知**。这样通知在课前 1 分钟送达，用户还来得及手动补签。
  *   三次没成就不再无限重试。
  *
@@ -51,7 +51,7 @@ interface AutoSignConfig {
     leadMinutes: number;
     /** 最多尝试几次（用户要求：3 次没成就停） */
     maxAttempts: number;
-    /** 每次尝试的间隔（秒）。默认 60，配合 leadMinutes=3 正好落在 T-3 / T-2 / T-1 */
+    /** 每次尝试的间隔（秒）。默认 30，配合 leadMinutes=2 落在 T-2 / T-1:30 / T-1 */
     retryIntervalSeconds: number;
     /**
      * 上课时间过去多少分钟就不再尝试。
@@ -81,9 +81,9 @@ const DEFAULT_CONFIG: AutoSignConfig = {
     vpnUsername: '',
     vpnPassword: '',
 
-    leadMinutes: 3,
+    leadMinutes: 2,
     maxAttempts: 3,
-    retryIntervalSeconds: 60,
+    retryIntervalSeconds: 30,
     giveUpMinutesAfterStart: 0,
     timetableRefreshMinutes: 10,
     sessionMaxAgeMinutes: 30,
@@ -350,8 +350,8 @@ class AutoSigner {
 
     /**
      * 对一节尝试最多 maxAttempts 次。返回是否成功。
-     * 每次尝试之间间隔 retryIntervalSeconds（默认 60 秒）——配合 leadMinutes=3，
-     * 三次正好落在 T-3 / T-2 / T-1，最后一次失败的通知赶在上课前发出。
+     * 每次尝试之间间隔 retryIntervalSeconds（默认 30 秒）——配合 leadMinutes=2，
+     * 三次落在 T-2 / T-1:30 / T-1，最后一次失败的通知赶在上课前发出。
      */
     async runSignSequence(
         course: TrackedCourse,

@@ -124,9 +124,9 @@ else
   "vpnUsername": "",
   "vpnPassword": "",
 
-  "leadMinutes": 3,
+  "leadMinutes": 2,
   "maxAttempts": 3,
-  "retryIntervalSeconds": 60,
+  "retryIntervalSeconds": 30,
   "giveUpMinutesAfterStart": 0,
   "timetableRefreshMinutes": 10,
   "sessionMaxAgeMinutes": 30,
@@ -198,7 +198,7 @@ cat <<EOF
   立刻签一次    sudo -u $RUN_USER $NODE_BIN $INSTALL_DIR/autosign.js --now
   测通知通道    sudo -u $RUN_USER $NODE_BIN $INSTALL_DIR/autosign.js --test-notify
 
-签到行为（默认，可在配置文件里改）：课前 3 分钟开始，最多尝试 3 次、每次间隔 60 秒，
+签到行为（默认，可在配置文件里改）：课前 2 分钟开始，最多尝试 3 次、每次间隔 30 秒，
           三次没成就停手并发一条失败通知（通知在课前送达，还来得及手动补签）。
 
 EOF
